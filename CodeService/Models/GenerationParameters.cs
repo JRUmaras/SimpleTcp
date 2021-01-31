@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace CodeService.Models
+﻿namespace CodeService.Models
 {
     public struct GenerationParameters
     {

@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace CodeService.Enums
+﻿namespace CodeService.Enums
 {
     public enum CodeState : byte
     {
