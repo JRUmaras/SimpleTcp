@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using CodeService.Enums;
 using CodeService.Interfaces;
 
@@ -55,6 +56,11 @@ namespace CodeService.Models
         IEnumerator IEnumerable.GetEnumerator()
         {
             return GetEnumerator();
+        }
+
+        public void AddRange(IEnumerable<Code> codes)
+        {
+            foreach (var code in codes) _codes.Add(code);
         }
     }
 }

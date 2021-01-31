@@ -8,17 +8,20 @@ namespace CodeService
     public class CodeService : ICodeService
     {
         private readonly IDataEncoder _dataEncoder;
-
         private readonly ICodesCollection _codes;
+        private readonly IRepository _repository;
 
-        public CodeService(IDataEncoder dataEncoder, ICodesCollection codesCollection)
+        public CodeService(IDataEncoder dataEncoder, ICodesCollection codesCollection, IRepository repository)
         {
             _dataEncoder = dataEncoder;
             _codes = codesCollection;
+            _repository = repository;
         }
 
         public void Start()
         {
+            _codes.AddRange(Task.Run(_repository.LoadCodes).Result);
+
             var tasks = new Task[2];
 
             tasks[0] = Task.Run(StartGeneratorService);
@@ -27,16 +30,16 @@ namespace CodeService
             Task.WaitAll(tasks);
         }
 
-        public Task StartGeneratorService()
+        public async Task StartGeneratorService()
         {
             var listener = new TcpListener(IPAddress.Parse("127.0.0.1"), 30_000);
             listener.Start();
 
             while (true)
             {
-                using var client = listener.AcceptTcpClient();
+                using var client = await listener.AcceptTcpClientAsync();
 
-                using var stream = client.GetStream();
+                await using var stream = client.GetStream();
 
                 var requestData = _dataEncoder.DecodeGenerateRequest(stream);
 
@@ -46,19 +49,21 @@ namespace CodeService
                 var responseAsByteArray = _dataEncoder.EncodeGenerateResponse(success);
 
                 stream.Write(responseAsByteArray, 0, 1);
+
+                var wasSaved = await _repository.SaveCodes(_codes);
             }
         }
 
-        public Task StartUseCodeService()
+        public async Task StartUseCodeService()
         {
             var listener = new TcpListener(IPAddress.Parse("127.0.0.1"), 30_001);
             listener.Start();
 
             while (true)
             {
-                using var client = listener.AcceptTcpClient();
+                using var client = await listener.AcceptTcpClientAsync();
 
-                using var stream = client.GetStream();
+                await using var stream = client.GetStream();
 
                 var codeToLookUp = _dataEncoder.DecodeUseCodeRequest(stream);
 
@@ -67,6 +72,8 @@ namespace CodeService
                 var responseAsByteArray = _dataEncoder.EncodeUseCodeResponse(response);
 
                 stream.Write(responseAsByteArray, 0, 1);
+
+                var wasSaved = await _repository.SaveCodes(_codes);
             }
         }
     }

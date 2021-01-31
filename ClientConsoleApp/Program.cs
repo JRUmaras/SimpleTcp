@@ -19,9 +19,9 @@ namespace ClientConsoleApp
                 switch (command)
                 {
                     case "G":
-                        Console.WriteLine("How many code to insert?");
+                        Console.WriteLine("How many codes to insert?");
                         var numberOfCodesToGenerate = ushort.Parse(Console.ReadLine());
-                        Console.WriteLine("How long should the codes be?");
+                        Console.WriteLine("How long should each code be?");
                         var codeLength = int.Parse(Console.ReadLine());
                         GenerateRequest(numberOfCodesToGenerate, codeLength);
                         break;
@@ -54,7 +54,7 @@ namespace ClientConsoleApp
             Console.WriteLine("Reading response...");
             var response = ClientDataEncoder.DecodeGenerateResponse(stream);
             Console.WriteLine($"Codes were generated {(response ? "successfully" : "unsuccessfully")}...");
-            Console.WriteLine("See you later, alligator!");
+            Console.WriteLine("See you later, alligator!\n");
         }
 
         private static void UseCodeRequest(string codeValue)
@@ -70,7 +70,7 @@ namespace ClientConsoleApp
 
             Console.WriteLine("Reading response...");
             var response = ClientDataEncoder.DecodeUseCodeResponse(stream);
-            Console.WriteLine($"Code states is {response}...");
+            Console.WriteLine($"Code state is {response}...");
             Console.WriteLine("See you later, alligator!");
         }
     }

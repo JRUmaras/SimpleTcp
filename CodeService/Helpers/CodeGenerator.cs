@@ -16,7 +16,7 @@ namespace CodeService.Helpers
 
         #endregion
 
-        private readonly Random _rndGenerator = new Random(0);
+        private readonly Random _rndGenerator = new Random((int)DateTime.Now.Ticks);
 
         /// <summary>
         /// Generates and adds new unique codes to existingCodes.

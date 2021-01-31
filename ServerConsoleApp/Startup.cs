@@ -2,6 +2,7 @@
 using CodeService.Helpers;
 using CodeService.Models;
 using CodeService.Interfaces;
+using CodeService.Repository;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace ServerConsoleApp
@@ -17,6 +18,7 @@ namespace ServerConsoleApp
                 .AddScoped<ICodeGenerator, CodeGenerator>()
                 .AddScoped<ICodeService, CodeService.CodeService>()
                 .AddScoped<ICodesCollection, CodesCollection>()
+                .AddSingleton<IRepository, JsonRepository>()
                 .BuildServiceProvider();
         }
     }

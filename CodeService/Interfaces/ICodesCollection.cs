@@ -11,5 +11,7 @@ namespace CodeService.Interfaces
         bool GenerateNewCodes(int numberOfCodesToAdd, int codeLength);
 
         CodeState CheckCode(Code codeToLookUp);
+
+        void AddRange(IEnumerable<Code> codes);
     }
 }
