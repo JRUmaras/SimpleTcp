@@ -1,4 +1,7 @@
-﻿using CodeService.Interfaces;
+﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
+using CodeService.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace ServerConsoleApp
@@ -11,7 +14,16 @@ namespace ServerConsoleApp
 
             var codeService = Startup.ServiceProvider.GetService<ICodeService>();
 
-            codeService.Start();
+            var cancellationTokenSource = new CancellationTokenSource();
+            var task = Task.Run(() => codeService.Start(cancellationTokenSource.Token), cancellationTokenSource.Token);
+
+            Console.WriteLine("Press enter to stop the service...");
+            Console.ReadLine();
+
+            cancellationTokenSource.Cancel();
+
+            task.Wait();
+            Console.WriteLine("Service was stopped successfully.");
         }
     }
 }

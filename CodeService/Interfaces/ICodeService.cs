@@ -1,7 +1,10 @@
-﻿namespace CodeService.Interfaces
+﻿using System.Threading;
+using System.Threading.Tasks;
+
+namespace CodeService.Interfaces
 {
     public interface ICodeService
     {
-        void Start();
+        Task Start(CancellationToken cancellationToken);
     }
 }

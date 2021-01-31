@@ -1,5 +1,8 @@
-﻿using System.Net;
+﻿using System;
+using System.IO;
+using System.Net;
 using System.Net.Sockets;
+using System.Threading;
 using System.Threading.Tasks;
 using CodeService.Interfaces;
 
@@ -18,63 +21,62 @@ namespace CodeService
             _repository = repository;
         }
 
-        public void Start()
+        public async Task Start(CancellationToken cancellationToken)
         {
-            _codes.AddRange(Task.Run(_repository.LoadCodes).Result);
+            _codes.AddRange(await Task.Run(_repository.LoadCodes, cancellationToken));
 
             var tasks = new Task[2];
 
-            tasks[0] = Task.Run(StartGeneratorService);
-            tasks[1] = Task.Run(StartUseCodeService);
+            tasks[0] = Task.Run(() => StartBaseService(IPAddress.Parse("127.0.0.1"), 30_000, GenerateService, cancellationToken), cancellationToken);
+            tasks[1] = Task.Run(() => StartBaseService(IPAddress.Parse("127.0.0.1"), 30_001, UseCodeService, cancellationToken), cancellationToken);
 
-            Task.WaitAll(tasks);
+            await Task.WhenAll(tasks);
+         
+            var tmp = await _repository.SaveCodes(_codes);
         }
 
-        public async Task StartGeneratorService()
+        public async Task StartBaseService(IPAddress ipAddress, int port, Func<Stream, byte[]> specificService, CancellationToken cancellationToken)
         {
-            var listener = new TcpListener(IPAddress.Parse("127.0.0.1"), 30_000);
+            var listener = new TcpListener(ipAddress, port);
             listener.Start();
 
-            while (true)
+            await using (cancellationToken.Register(listener.Stop))
             {
-                using var client = await listener.AcceptTcpClientAsync();
+                try
+                {
+                    while (true)
+                    {
+                        using var client = await Task.Run(() => listener.AcceptTcpClientAsync(), cancellationToken);
+                        await using var stream = await Task.Run(() => client.GetStream(), cancellationToken);
 
-                await using var stream = client.GetStream();
+                        var responseAsByteArray = specificService(stream);
 
-                var requestData = _dataEncoder.DecodeGenerateRequest(stream);
-
-                var success = requestData.NumberOfCodesToGenerate > 0 
-                              && _codes.GenerateNewCodes(requestData.NumberOfCodesToGenerate, requestData.CodeLength);
-
-                var responseAsByteArray = _dataEncoder.EncodeGenerateResponse(success);
-
-                stream.Write(responseAsByteArray, 0, 1);
-
-                var wasSaved = await _repository.SaveCodes(_codes);
+                        await stream.WriteAsync(responseAsByteArray, 0, 1, cancellationToken);
+                    }
+                }
+                catch (ObjectDisposedException)
+                { }
             }
         }
 
-        public async Task StartUseCodeService()
+        public byte[] GenerateService(Stream stream)
         {
-            var listener = new TcpListener(IPAddress.Parse("127.0.0.1"), 30_001);
-            listener.Start();
+            var requestData = _dataEncoder.DecodeGenerateRequest(stream);
 
-            while (true)
-            {
-                using var client = await listener.AcceptTcpClientAsync();
+            var success = requestData.NumberOfCodesToGenerate > 0
+                          && _codes.GenerateNewCodes(requestData.NumberOfCodesToGenerate,
+                              requestData.CodeLength);
 
-                await using var stream = client.GetStream();
+            return _dataEncoder.EncodeGenerateResponse(success);
+        }
 
-                var codeToLookUp = _dataEncoder.DecodeUseCodeRequest(stream);
+        public byte[] UseCodeService(Stream stream)
+        {
+            var codeToLookUp = _dataEncoder.DecodeUseCodeRequest(stream);
 
-                var response = _codes.CheckCode(codeToLookUp);
+            var response = _codes.CheckCode(codeToLookUp);
 
-                var responseAsByteArray = _dataEncoder.EncodeUseCodeResponse(response);
-
-                stream.Write(responseAsByteArray, 0, 1);
-
-                var wasSaved = await _repository.SaveCodes(_codes);
-            }
+            return _dataEncoder.EncodeUseCodeResponse(response);
         }
     }
 }
