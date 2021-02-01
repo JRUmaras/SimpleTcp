@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using CodeService.Enums;
 using CodeService.Helpers;
 using CodeService.Models;
 using NUnit.Framework;
@@ -10,26 +9,21 @@ namespace TestCodeService
     public class CodesGenerationTests
     {
         [Test]
-        public void GenerateAndAddCodesToHashSetTest()
+        [TestCase(8, 100)]
+        [TestCase(7, 3000)]
+        [TestCase(8, 2000)]
+        public void GenerateAndAddCodesToHashSetTest(int codeLength, int numberOfCodesToGenerate)
         {
             var generator = new CodeGenerator();
             var codes = new HashSet<Code>();
 
-            var wasSuccessful = generator.GenerateAndAddUniqueCodes(codes, 8, 100);
-            Assert.AreEqual(100, codes.Count);
-            Assert.IsTrue(wasSuccessful);
-
-            wasSuccessful = generator.GenerateAndAddUniqueCodes(codes, 7, 3000);
-            Assert.AreEqual(3100, codes.Count);
-            Assert.IsTrue(wasSuccessful);
-
-            wasSuccessful = generator.GenerateAndAddUniqueCodes(codes, 8, 2000);
-            Assert.AreEqual(5100, codes.Count);
+            var wasSuccessful = generator.GenerateAndAddUniqueCodes(codes, codeLength, numberOfCodesToGenerate);
+            Assert.AreEqual(numberOfCodesToGenerate, codes.Count);
             Assert.IsTrue(wasSuccessful);
         }
 
         [Test]
-        public void CodeUniquenessTest()
+        public void CodePseudoUniquenessTest()
         {
             var generator = new CodeGenerator();
             var codes = new HashSet<Code>();
@@ -56,34 +50,6 @@ namespace TestCodeService
             wasSuccessful = generator.GenerateAndAddUniqueCodes(codes, 0, 1);
             Assert.AreEqual(1, codes.Count);
             Assert.IsFalse(wasSuccessful);
-        }
-
-        [Test]
-        public void HashSetOfCodesTest()
-        {
-            var set = new HashSet<Code>();
-
-            var code1 = new Code("ABC");
-            var code2 = new Code("CBA");
-            var code3 = new Code("ABC");
-            var code4 = new Code("ABC", CodeState.Used);
-
-            var res = set.Add(code1);
-            Assert.IsTrue(res);
-
-            res = set.Add(code2);
-            Assert.IsTrue(res);
-
-            res = set.Add(code3);
-            Assert.IsFalse(res);
-
-            res = set.Add(code1);
-            Assert.IsFalse(res);
-
-            res = set.Add(code4);
-            Assert.IsFalse(res);
-
-            Assert.AreEqual(2, set.Count);
         }
     }
 }

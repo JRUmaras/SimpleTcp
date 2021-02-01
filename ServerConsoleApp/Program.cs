@@ -24,6 +24,10 @@ namespace ServerConsoleApp
 
             task.Wait();
             Console.WriteLine("Service was stopped successfully.");
+            Console.WriteLine();
+
+            Console.WriteLine("Press enter to exit...");
+            Console.ReadLine();
         }
     }
 }

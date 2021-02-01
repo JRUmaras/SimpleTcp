@@ -10,7 +10,6 @@ namespace CodeService.Helpers
     {
         private const int _bufferSizeForInputGenerate = 3;
         private const int _bufferSizeForInputUseCode = 8;
-        private const int _maxCodeLength = 8;
         private const int _bitsInByte = 8;
         private const int _maxNumberOfCodesToGenerate = 2_000;
 
@@ -24,7 +23,10 @@ namespace CodeService.Helpers
             var codeLength = (int) buffer[2];
             var numberOfCodesToGenerate = (buffer[0] << _bitsInByte) + buffer[1];
 
-            if (!_validCodeLengths.Contains(codeLength) || numberOfCodesToGenerate > _maxNumberOfCodesToGenerate || numberOfCodesToGenerate < 1)
+            // Don't generate codes if input does not meet specification
+            if (!_validCodeLengths.Contains(codeLength) 
+                || numberOfCodesToGenerate > _maxNumberOfCodesToGenerate 
+                || numberOfCodesToGenerate < 1)
             {
                 numberOfCodesToGenerate = 0;
             }

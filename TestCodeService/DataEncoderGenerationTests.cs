@@ -1,5 +1,7 @@
 using System.IO;
+using System.Security.Cryptography;
 using CodeService.Helpers;
+using CodeService.Models;
 using NUnit.Framework;
 
 namespace TestCodeService
@@ -7,47 +9,20 @@ namespace TestCodeService
     public class DataEncoderGenerationTests
     {
         [Test]
-        public void NormalInputTest()
+        [TestCase(new byte[] { 0, 255, 8 }, 8, 255)]
+        [TestCase(new byte[] { 1, 0, 7 }, 7, 256)]
+        [TestCase(new byte[] { 7, 208, 7 }, 7, 2000)]
+        [TestCase(new byte[] { 4, 12, 7 }, 7, 1036)]
+        public void NormalInputTest(byte[] input, int expectedCodeLength, int expectedNumberOfCodesToGenerate)
         {
             var encoder = new DataEncoder();
 
             var memStream = new MemoryStream();
 
-            memStream.WriteByte(0);
-            memStream.WriteByte(255);
-            memStream.WriteByte(8);
+            memStream.Write(input, 0, input.Length);
             memStream.Seek(0, SeekOrigin.Begin);
             var requestData = encoder.DecodeGenerateRequest(memStream);
-            Assert.AreEqual(8, requestData.CodeLength);
-            Assert.AreEqual(255, requestData.NumberOfCodesToGenerate);
-            memStream.SetLength(0);
-
-            memStream.WriteByte(1);
-            memStream.WriteByte(0);
-            memStream.WriteByte(7);
-            memStream.Seek(0, SeekOrigin.Begin);
-            requestData = encoder.DecodeGenerateRequest(memStream);
-            Assert.AreEqual(7, requestData.CodeLength);
-            Assert.AreEqual(256, requestData.NumberOfCodesToGenerate);
-            memStream.SetLength(0);
-
-            memStream.WriteByte(7);
-            memStream.WriteByte(208);
-            memStream.WriteByte(7);
-            memStream.Seek(0, SeekOrigin.Begin);
-            requestData = encoder.DecodeGenerateRequest(memStream);
-            Assert.AreEqual(7, requestData.CodeLength);
-            Assert.AreEqual(2000, requestData.NumberOfCodesToGenerate);
-            memStream.SetLength(0);
-
-            memStream.WriteByte(4);
-            memStream.WriteByte(12);
-            memStream.WriteByte(7);
-            memStream.Seek(0, SeekOrigin.Begin);
-            requestData = encoder.DecodeGenerateRequest(memStream);
-            Assert.AreEqual(7, requestData.CodeLength);
-            Assert.AreEqual(1036, requestData.NumberOfCodesToGenerate);
-            memStream.SetLength(0);
+            Assert.AreEqual(expectedCodeLength, requestData.CodeLength);
         }
 
         [Test]
@@ -57,14 +32,11 @@ namespace TestCodeService
 
             var memStream = new MemoryStream();
 
-            memStream.WriteByte(7);
-            memStream.WriteByte(209);
-            memStream.WriteByte(7);
+            memStream.Write(new byte[] { 7, 209, 7 }, 0, 3);
             memStream.Seek(0, SeekOrigin.Begin);
             var requestData = encoder.DecodeGenerateRequest(memStream);
             Assert.AreEqual(7, requestData.CodeLength);
             Assert.AreEqual(0, requestData.NumberOfCodesToGenerate);
-            memStream.SetLength(0);
         }
 
         [Test]
@@ -74,14 +46,11 @@ namespace TestCodeService
 
             var memStream = new MemoryStream();
 
-            memStream.WriteByte(0);
-            memStream.WriteByte(0);
-            memStream.WriteByte(7);
+            memStream.Write(new byte[] { 0, 0, 7 }, 0, 3);
             memStream.Seek(0, SeekOrigin.Begin);
             var requestData = encoder.DecodeGenerateRequest(memStream);
             Assert.AreEqual(7, requestData.CodeLength);
             Assert.AreEqual(0, requestData.NumberOfCodesToGenerate);
-            memStream.SetLength(0);
         }
 
         [Test]
@@ -91,14 +60,11 @@ namespace TestCodeService
 
             var memStream = new MemoryStream();
 
-            memStream.WriteByte(0);
-            memStream.WriteByte(1);
-            memStream.WriteByte(9);
+            memStream.Write(new byte[] { 0, 1, 9 }, 0, 3);
             memStream.Seek(0, SeekOrigin.Begin);
             var requestData = encoder.DecodeGenerateRequest(memStream);
             Assert.AreEqual(9, requestData.CodeLength);
             Assert.AreEqual(0, requestData.NumberOfCodesToGenerate);
-            memStream.SetLength(0);
         }
 
         [Test]
@@ -108,14 +74,11 @@ namespace TestCodeService
 
             var memStream = new MemoryStream();
 
-            memStream.WriteByte(0);
-            memStream.WriteByte(1);
-            memStream.WriteByte(6);
+            memStream.Write(new byte[] { 0, 1, 6 }, 0, 3);
             memStream.Seek(0, SeekOrigin.Begin);
             var requestData = encoder.DecodeGenerateRequest(memStream);
             Assert.AreEqual(6, requestData.CodeLength);
             Assert.AreEqual(0, requestData.NumberOfCodesToGenerate);
-            memStream.SetLength(0);
         }
 
         [Test]

@@ -37,7 +37,5 @@ namespace TestCodeService
             Assert.AreEqual(1, output.Length);
             Assert.AreEqual(expectedByte, output[0]);
         }
-
-        
     }
 }

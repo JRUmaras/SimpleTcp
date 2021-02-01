@@ -32,10 +32,10 @@ namespace CodeService
 
             await Task.WhenAll(tasks);
          
-            var tmp = await _repository.SaveCodes(_codes);
+            await _repository.SaveCodes(_codes);
         }
 
-        public async Task StartBaseService(IPAddress ipAddress, int port, Func<Stream, byte[]> specificService, CancellationToken cancellationToken)
+        private static async Task StartBaseService(IPAddress ipAddress, int port, Func<Stream, byte[]> specificService, CancellationToken cancellationToken)
         {
             var listener = new TcpListener(ipAddress, port);
             listener.Start();
@@ -59,7 +59,7 @@ namespace CodeService
             }
         }
 
-        public byte[] GenerateService(Stream stream)
+        private byte[] GenerateService(Stream stream)
         {
             var requestData = _dataEncoder.DecodeGenerateRequest(stream);
 
@@ -70,7 +70,7 @@ namespace CodeService
             return _dataEncoder.EncodeGenerateResponse(success);
         }
 
-        public byte[] UseCodeService(Stream stream)
+        private byte[] UseCodeService(Stream stream)
         {
             var codeToLookUp = _dataEncoder.DecodeUseCodeRequest(stream);
 

@@ -6,61 +6,41 @@ namespace TestClientConsoleApp
 {
     public class ClientDataEncoderTests
     {
-        [SetUp]
-        public void Setup()
-        {
-        }
-
         [Test]
-        public void EncodingTest()
+        [TestCase(new byte[] { 7, 208, 8 }, (ushort)2000, 8)]
+        [TestCase(new byte[] { 3, 232, 7 }, (ushort)1000, 7)]
+        [TestCase(new byte[] { 0, 50, 8 }, (ushort)50, 8)]
+        [TestCase(new byte[] { 0, 0, 8 }, (ushort)0, 8)]
+        public void EncodingTest(byte[] expectedOutput, ushort numberOfCodesToGenerate, int codeLength)
         {
-            var requestAsBytes = ClientDataEncoder.EncodeGenerateRequest(2000, 8);
-            Assert.AreEqual(7, requestAsBytes[0]);
-            Assert.AreEqual(208, requestAsBytes[1]);
-            Assert.AreEqual(8, requestAsBytes[2]);
-
-            requestAsBytes = ClientDataEncoder.EncodeGenerateRequest(1000, 7);
-            Assert.AreEqual(0b0000_0011, requestAsBytes[0]);
-            Assert.AreEqual(0b1110_1000, requestAsBytes[1]);
-            Assert.AreEqual(7, requestAsBytes[2]);
-
-            requestAsBytes = ClientDataEncoder.EncodeGenerateRequest(50, 8);
-            Assert.AreEqual(0, requestAsBytes[0]);
-            Assert.AreEqual(0b0011_0010, requestAsBytes[1]);
-            Assert.AreEqual(8, requestAsBytes[2]);
-
-            requestAsBytes = ClientDataEncoder.EncodeGenerateRequest(0, 8);
-            Assert.AreEqual(0, requestAsBytes[0]);
-            Assert.AreEqual(0, requestAsBytes[1]);
-            Assert.AreEqual(8, requestAsBytes[2]);
+            var requestAsBytes = ClientDataEncoder.EncodeGenerateRequest(numberOfCodesToGenerate, codeLength);
+            Assert.AreEqual(expectedOutput[0], requestAsBytes[0]);
+            Assert.AreEqual(expectedOutput[1], requestAsBytes[1]);
+            Assert.AreEqual(expectedOutput[2], requestAsBytes[2]);
         }
 
 
         [Test]
-        public void DecodingTest()
+        [TestCase((byte)0, false)]
+        [TestCase((byte)1, true)]
+        public void DecodingTest(byte input, bool expectedOutput)
         {
             var memStream = new MemoryStream();
-            memStream.WriteByte(0);
+            memStream.WriteByte(input);
             memStream.Seek(0, SeekOrigin.Begin);
-            Assert.AreEqual(false, ClientDataEncoder.DecodeGenerateResponse(memStream));
-            memStream.SetLength(0);
+            Assert.AreEqual(expectedOutput, ClientDataEncoder.DecodeGenerateResponse(memStream));
+        }
 
-            memStream.WriteByte(1);
-            memStream.Seek(0, SeekOrigin.Begin);
-            Assert.AreEqual(true, ClientDataEncoder.DecodeGenerateResponse(memStream));
-            memStream.SetLength(0);
+        [Test]
+        [TestCase(new byte[] { 1, 0 }, true)]
+        [TestCase(new byte[] { 0, 1 }, false)]
+        public void DecodingTooManyBytesTest(byte[] input, bool expectedOutput)
+        {
+            var memStream = new MemoryStream();
 
-            memStream.WriteByte(1);
-            memStream.WriteByte(0);
+            memStream.Write(input, 0, input.Length);
             memStream.Seek(0, SeekOrigin.Begin);
-            Assert.AreEqual(true, ClientDataEncoder.DecodeGenerateResponse(memStream));
-            memStream.SetLength(0);
-
-            memStream.WriteByte(0);
-            memStream.WriteByte(1);
-            memStream.Seek(0, SeekOrigin.Begin);
-            Assert.AreEqual(false, ClientDataEncoder.DecodeGenerateResponse(memStream));
-            memStream.SetLength(0);
+            Assert.AreEqual(expectedOutput, ClientDataEncoder.DecodeGenerateResponse(memStream));
         }
     }
 }

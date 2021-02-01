@@ -7,7 +7,7 @@ namespace TestCodeService
     public class SingleCodeGenerationTests
     {
         [Test]
-        public void AssertNonNullCodeIsGeneratedTest()
+        public void CodeIsGeneratedTest()
         {
             var generator = new CodeGenerator();
 
@@ -16,21 +16,16 @@ namespace TestCodeService
         }
 
         [Test]
-        public void NormalCodeGenerationTest()
+        [TestCase(1)]
+        [TestCase(7)]
+        [TestCase(8)]
+        public void NormalCodeGenerationTest(int length)
         {
             var generator = new CodeGenerator();
 
-            var code = generator.GenerateCode(1);
+            var code = generator.GenerateCode(length);
             Assert.IsNotNull(code);
-            Assert.AreEqual(1, code.Value.Length);
-
-            code = generator.GenerateCode(7);
-            Assert.IsNotNull(code);
-            Assert.AreEqual(7, code.Value.Length);
-
-            code = generator.GenerateCode(8);
-            Assert.IsNotNull(code);
-            Assert.AreEqual(8, code.Value.Length);
+            Assert.AreEqual(length, code.Value.Length);
         }
 
         [Test]
