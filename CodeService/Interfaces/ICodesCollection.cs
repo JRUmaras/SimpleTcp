@@ -6,12 +6,16 @@ namespace CodeService.Interfaces
 {
     public interface ICodesCollection : IEnumerable<Code>
     {
-        int Length { get; }
-
-        bool GenerateNewCodes(int numberOfCodesToAdd, int codeLength);
+        int Count { get; }
 
         CodeState CheckCode(Code codeToLookUp);
 
+        bool Add(Code code);
+
+        void Remove(Code code);
+
         void AddRange(IEnumerable<Code> codes);
+
+        void RemoveRange(IEnumerable<Code> codes);
     }
 }

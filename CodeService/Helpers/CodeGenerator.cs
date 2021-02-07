@@ -8,62 +8,72 @@ namespace CodeService.Helpers
 {
     public class CodeGenerator : ICodeGenerator
     {
-        #region Settings
-
         private const string _availableCharacters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
         private const int _maxFailedGenerationAttempts = 100_000;
-
-        #endregion
 
         private readonly Random _rndGenerator = new Random((int)DateTime.Now.Ticks);
 
         /// <summary>
         /// Generates and adds new unique codes to existingCodes.
-        /// This operation fails if it cannot generate a unique key in
-        /// a certain number of tries.
+        /// This operation does a roll back if it cannot generate enough
+        /// unique keys in a certain amount of tries.
         /// </summary>
         /// <param name="existingCodes"></param>
         /// <param name="codeLength"></param>
         /// <param name="numberOfCodesToGenerate"></param>
         /// <returns>True if generation succeeded, false - if it failed.</returns>
-        public bool GenerateAndAddUniqueCodes(HashSet<Code> existingCodes, int codeLength, int numberOfCodesToGenerate)
+        public bool TryAddNewUniqueCodes(ICodesCollection existingCodes, int codeLength, int numberOfCodesToGenerate, out List<Code> newCodesAdded)
         {
             var countOfAttempts = 0;
-            var codesGenerated = 0;
 
-            var newCodes = new HashSet<Code>();
+            newCodesAdded = new List<Code>(numberOfCodesToGenerate);
 
-            while (codesGenerated < numberOfCodesToGenerate)
+            while (newCodesAdded.Count < numberOfCodesToGenerate)
             {
-                var newCode = GenerateCode(codeLength);
+                if (countOfAttempts > _maxFailedGenerationAttempts) 
+                    break;
+                
+                var setOfCodes = GenerateCodes(codeLength, numberOfCodesToGenerate - newCodesAdded.Count);
 
-                if (!existingCodes.Contains(newCode) && newCodes.Add(newCode))
+                for (var idx = 0; idx < setOfCodes.Length; ++idx)
                 {
-                    ++codesGenerated;
-                    countOfAttempts = 0;
+                    if (existingCodes.Add(setOfCodes[idx])) newCodesAdded.Add(setOfCodes[idx]);
                 }
 
                 countOfAttempts++;
-                if (countOfAttempts > _maxFailedGenerationAttempts) break;
             }
 
-            if (codesGenerated != numberOfCodesToGenerate) return false;
+            if (newCodesAdded.Count == numberOfCodesToGenerate) return true;
 
-            existingCodes.UnionWith(newCodes);
-            return true;
+            existingCodes.RemoveRange(newCodesAdded);
+            newCodesAdded = new List<Code>();
+
+            return false;
         }
 
         public Code GenerateCode(int length)
         {
             var charSet = new char[length];
 
-            for (var iii = 0; iii < length; ++iii)
+            for (var idx = 0; idx < length; ++idx)
             {
-                charSet[iii] = _availableCharacters[_rndGenerator.Next(0, _availableCharacters.Length)];
+                charSet[idx] = _availableCharacters[_rndGenerator.Next(0, _availableCharacters.Length)];
             }
 
             return new Code(new string(charSet), CodeState.NotUsed);
+        }
+
+        public Code[] GenerateCodes(int codeLength, int numberOfCodesToGenerate)
+        {
+            var newCodes = new Code[numberOfCodesToGenerate];
+
+            for (var idx = 0; idx < numberOfCodesToGenerate; ++idx)
+            {
+                newCodes[idx] = GenerateCode(codeLength);
+            }
+
+            return newCodes;
         }
     }
 }

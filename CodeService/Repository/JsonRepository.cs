@@ -10,14 +10,12 @@ namespace CodeService.Repository
 {
     public class JsonRepository : IRepository
     {
-        public JsonRepository()
-        {
-            Directory.CreateDirectory("Storage");
-        }
+        private readonly string _fullStorageFilePath = Resources.RelativeStorageFilePath + Resources.StorageFilename;
 
         public async Task<bool> SaveCodes(IEnumerable<Code> codes)
         {
-            await using var createStream = File.Create(Resources.StorageFilePath);
+            Directory.CreateDirectory(Resources.RelativeStorageFilePath);
+            await using var createStream = File.Create(_fullStorageFilePath);
 
             await JsonSerializer.SerializeAsync(createStream, codes);
 
@@ -26,9 +24,9 @@ namespace CodeService.Repository
 
         public async Task<IEnumerable<Code>> LoadCodes()
         {
-            if (!File.Exists(Resources.StorageFilePath)) return new Code[0];
+            if (!File.Exists(_fullStorageFilePath)) return new Code[0];
 
-            await using var openStream = File.OpenRead(Resources.StorageFilePath);
+            await using var openStream = File.OpenRead(_fullStorageFilePath);
 
             return openStream.Length == 0 
                 ? new Code[0] 

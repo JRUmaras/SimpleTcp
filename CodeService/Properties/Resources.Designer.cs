@@ -61,11 +61,20 @@ namespace CodeService.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Storage/codes.json.
+        ///   Looks up a localized string similar to Storage/.
         /// </summary>
-        internal static string StorageFilePath {
+        internal static string RelativeStorageFilePath {
             get {
-                return ResourceManager.GetString("StorageFilePath", resourceCulture);
+                return ResourceManager.GetString("RelativeStorageFilePath", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to codes.json.
+        /// </summary>
+        internal static string StorageFilename {
+            get {
+                return ResourceManager.GetString("StorageFilename", resourceCulture);
             }
         }
     }

@@ -4,7 +4,9 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
+using CodeService.Enums;
 using CodeService.Interfaces;
+using CodeService.Models;
 
 namespace CodeService
 {
@@ -13,12 +15,18 @@ namespace CodeService
         private readonly IDataEncoder _dataEncoder;
         private readonly ICodesCollection _codes;
         private readonly IRepository _repository;
+        private readonly ICodeGenerator _codeGenerator;
 
-        public CodeService(IDataEncoder dataEncoder, ICodesCollection codesCollection, IRepository repository)
+        private const string _ip = "127.0.0.1";
+        private const int _portForGeneratingCodes = 30_000;
+        private const int _portForUsingCode = 30_001;
+
+        public CodeService(IDataEncoder dataEncoder, ICodesCollection codesCollection, IRepository repository, ICodeGenerator codeGenerator)
         {
             _dataEncoder = dataEncoder;
             _codes = codesCollection;
             _repository = repository;
+            _codeGenerator = codeGenerator;
         }
 
         public async Task Start(CancellationToken cancellationToken)
@@ -27,8 +35,8 @@ namespace CodeService
 
             var tasks = new Task[2];
 
-            tasks[0] = Task.Run(() => StartBaseService(IPAddress.Parse("127.0.0.1"), 30_000, GenerateService, cancellationToken), cancellationToken);
-            tasks[1] = Task.Run(() => StartBaseService(IPAddress.Parse("127.0.0.1"), 30_001, UseCodeService, cancellationToken), cancellationToken);
+            tasks[0] = Task.Run(() => StartBaseService(IPAddress.Parse(_ip), _portForGeneratingCodes, GenerateService, cancellationToken), cancellationToken);
+            tasks[1] = Task.Run(() => StartBaseService(IPAddress.Parse(_ip), _portForUsingCode, UseCodeService, cancellationToken), cancellationToken);
 
             await Task.WhenAll(tasks);
          
@@ -63,9 +71,7 @@ namespace CodeService
         {
             var requestData = _dataEncoder.DecodeGenerateRequest(stream);
 
-            var success = requestData.NumberOfCodesToGenerate > 0
-                          && _codes.GenerateNewCodes(requestData.NumberOfCodesToGenerate,
-                              requestData.CodeLength);
+            var success = TryGenerateNewCodes(requestData);
 
             return _dataEncoder.EncodeGenerateResponse(success);
         }
@@ -76,7 +82,34 @@ namespace CodeService
 
             var response = _codes.CheckCode(codeToLookUp);
 
+            // In UseCode operation, the only case when any code changes its
+            // state is when an unused code is checked. So we save 
+            // the codes in the storage only in such a case.
+            if (response == CodeState.NotUsed) SaveCodesToStorage();
+
             return _dataEncoder.EncodeUseCodeResponse(response);
+        }
+
+        private bool SaveCodesToStorage()
+        {
+            var task = _repository.SaveCodes(_codes);
+
+            Task.WaitAll(task);
+
+            return task.Result;
+        }
+
+        private bool TryGenerateNewCodes(GenerationParameters requestData)
+        {
+            var generationSucceeded = _codeGenerator.TryAddNewUniqueCodes(_codes, requestData.CodeLength, requestData.NumberOfCodesToGenerate, out var newCodes);
+
+            if (!generationSucceeded) return false;
+
+            if (SaveCodesToStorage()) return true;
+
+            // Rollback if save to storage failed.
+            _codes.RemoveRange(newCodes);
+            return false;
         }
     }
 }

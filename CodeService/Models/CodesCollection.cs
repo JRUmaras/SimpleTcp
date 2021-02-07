@@ -9,26 +9,9 @@ namespace CodeService.Models
     {
         private readonly HashSet<Code> _codes = new HashSet<Code>();
 
-        private readonly ICodeGenerator _codeGenerator;
+        public int Count => _codes.Count;
 
-        public int Length => _codes.Count;
-
-        public CodesCollection(ICodeGenerator codeGenerator)
-        {
-            _codeGenerator = codeGenerator;
-        }
-
-        public bool GenerateNewCodes(int numberOfCodesToAdd, int codeLength)
-        {
-            var wasSuccessful = _codeGenerator.GenerateAndAddUniqueCodes(_codes, codeLength, numberOfCodesToAdd);
-
-            return wasSuccessful;
-        }
-
-        public bool Contains(Code code)
-        {
-            return _codes.Contains(code);
-        }
+        public bool Contains(Code code) => _codes.Contains(code);
 
         public CodeState CheckCode(Code codeToLookUp)
         {
@@ -47,19 +30,16 @@ namespace CodeService.Models
             return response;
         }
 
-        public IEnumerator<Code> GetEnumerator()
-        {
-            return _codes.GetEnumerator();
-        }
+        public IEnumerator<Code> GetEnumerator() => _codes.GetEnumerator();
 
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-        public void AddRange(IEnumerable<Code> codes)
-        {
-            _codes.UnionWith(codes);
-        }
+        public void AddRange(IEnumerable<Code> codes) => _codes.UnionWith(codes);
+
+        public void RemoveRange(IEnumerable<Code> codes) => _codes.ExceptWith(codes);
+
+        public bool Add(Code codes) => _codes.Add(codes);
+
+        public void Remove(Code codes) => _codes.Remove(codes);
     }
 }

@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using CodeService.Helpers;
 using CodeService.Models;
 using NUnit.Framework;
@@ -15,9 +14,11 @@ namespace TestCodeService
         public void GenerateAndAddCodesToHashSetTest(int codeLength, int numberOfCodesToGenerate)
         {
             var generator = new CodeGenerator();
-            var codes = new HashSet<Code>();
+            var codes = new CodesCollection();
 
-            var wasSuccessful = generator.GenerateAndAddUniqueCodes(codes, codeLength, numberOfCodesToGenerate);
+            var wasSuccessful = generator.TryAddNewUniqueCodes(codes, codeLength, numberOfCodesToGenerate, out var newCodes);
+
+            Assert.AreEqual(numberOfCodesToGenerate, newCodes.Count);
             Assert.AreEqual(numberOfCodesToGenerate, codes.Count);
             Assert.IsTrue(wasSuccessful);
         }
@@ -26,28 +27,36 @@ namespace TestCodeService
         public void CodePseudoUniquenessTest()
         {
             var generator = new CodeGenerator();
-            var codes = new HashSet<Code>();
+            var codes = new CodesCollection();
 
-            var wasSuccessful = generator.GenerateAndAddUniqueCodes(codes, 8, 2_000_000);
+            var numberOfCodesToGenerateFirstTime = 10_000_000;
+
+            var wasSuccessful = generator.TryAddNewUniqueCodes(codes, 8, numberOfCodesToGenerateFirstTime, out var newCodes);
+            Assert.AreEqual(numberOfCodesToGenerateFirstTime, newCodes.Count);
+            Assert.AreEqual(numberOfCodesToGenerateFirstTime, codes.Count);
             Assert.IsTrue(wasSuccessful);
 
-            wasSuccessful = generator.GenerateAndAddUniqueCodes(codes, 8, 3_000_000);
+            var numberOfCodesToGenerateSecondTime = 3_000_000;
+
+            wasSuccessful = generator.TryAddNewUniqueCodes(codes, 8, numberOfCodesToGenerateSecondTime, out newCodes);
+            Assert.AreEqual(numberOfCodesToGenerateSecondTime, newCodes.Count);
+            Assert.AreEqual(numberOfCodesToGenerateFirstTime + numberOfCodesToGenerateSecondTime, codes.Count);
             Assert.IsTrue(wasSuccessful);
 
-            Assert.AreEqual(5_000_000, codes.Select(c => c.Value).Distinct().Count());
+            Assert.AreEqual(numberOfCodesToGenerateFirstTime + numberOfCodesToGenerateSecondTime, codes.Select(c => c.Value).Distinct().Count());
         }
 
         [Test]
         public void CodesGenerationAttemptsCeilingTest()
         {
             var generator = new CodeGenerator();
-            var codes = new HashSet<Code>();
+            var codes = new CodesCollection();
 
-            var wasSuccessful = generator.GenerateAndAddUniqueCodes(codes, 0, 1);
+            var wasSuccessful = generator.TryAddNewUniqueCodes(codes, 0, 1, out _);
             Assert.AreEqual(1, codes.Count);
             Assert.IsTrue(wasSuccessful);
 
-            wasSuccessful = generator.GenerateAndAddUniqueCodes(codes, 0, 1);
+            wasSuccessful = generator.TryAddNewUniqueCodes(codes, 0, 1, out _);
             Assert.AreEqual(1, codes.Count);
             Assert.IsFalse(wasSuccessful);
         }

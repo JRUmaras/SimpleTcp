@@ -23,7 +23,6 @@ namespace CodeService.Helpers
             var codeLength = (int) buffer[2];
             var numberOfCodesToGenerate = (buffer[0] << _bitsInByte) + buffer[1];
 
-            // Don't generate codes if input does not meet specification
             if (!_validCodeLengths.Contains(codeLength) 
                 || numberOfCodesToGenerate > _maxNumberOfCodesToGenerate 
                 || numberOfCodesToGenerate < 1)
@@ -43,9 +42,9 @@ namespace CodeService.Helpers
         public Code DecodeUseCodeRequest(Stream stream)
         {
             var buffer = new byte[_bufferSizeForInputUseCode];
-            var charRead = stream.Read(buffer, 0, _bufferSizeForInputUseCode);
+            var numberOfCharactersRead = stream.Read(buffer, 0, _bufferSizeForInputUseCode);
 
-            var codeValue = System.Text.Encoding.ASCII.GetString(buffer, 0, charRead);
+            var codeValue = System.Text.Encoding.ASCII.GetString(buffer, 0, numberOfCharactersRead);
 
             return new Code(codeValue);
         }

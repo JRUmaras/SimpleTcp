@@ -11,30 +11,38 @@ namespace TestCodeService
         [Test]
         public void UseUnusedCodeTest()
         {
-            var codes = new CodesCollection(new CodeGenerator());
+            var codes = new CodesCollection();
+            var generator = new CodeGenerator();
 
-            var wasSuccess = codes.GenerateNewCodes(10, 8);
+            var codeLength = 8;
+            var numberOfCodesToGenerate = 10;
+
+            var wasSuccess = generator.TryAddNewUniqueCodes(codes, codeLength, numberOfCodesToGenerate, out _);
             Assert.IsTrue(wasSuccess);
-            Assert.AreEqual(10, codes.Length);
+            Assert.AreEqual(numberOfCodesToGenerate, codes.Count);
 
             var codeState = codes.CheckCode(codes.First());
             Assert.AreEqual(CodeState.NotUsed, codeState);
 
             var states = codes.GroupBy(c => c.State).ToDictionary(g => g.Key, g => g.Count());
             Assert.AreEqual(2, states.Count);
-            Assert.AreEqual(9, states[CodeState.NotUsed]);
+            Assert.AreEqual(numberOfCodesToGenerate - 1, states[CodeState.NotUsed]);
             Assert.AreEqual(1, states[CodeState.Used]);
-            Assert.AreEqual(10, codes.Length);
+            Assert.AreEqual(numberOfCodesToGenerate, codes.Count);
         }
 
         [Test]
         public void UseUsedCodeTest()
         {
-            var codes = new CodesCollection(new CodeGenerator());
+            var codes = new CodesCollection();
+            var generator = new CodeGenerator();
 
-            var wasSuccess = codes.GenerateNewCodes(10, 8);
+            var codeLength = 8;
+            var numberOfCodesToGenerate = 10;
+
+            var wasSuccess = generator.TryAddNewUniqueCodes(codes, codeLength, numberOfCodesToGenerate, out _);
             Assert.IsTrue(wasSuccess);
-            Assert.AreEqual(10, codes.Length);
+            Assert.AreEqual(numberOfCodesToGenerate, codes.Count);
 
             var codeState = codes.CheckCode(codes.First());
             Assert.AreEqual(CodeState.NotUsed, codeState);
@@ -44,25 +52,28 @@ namespace TestCodeService
 
             var states = codes.GroupBy(c => c.State).ToDictionary(g => g.Key, g => g.Count());
             Assert.AreEqual(2, states.Count);
-            Assert.AreEqual(9, states[CodeState.NotUsed]);
+            Assert.AreEqual(numberOfCodesToGenerate - 1, states[CodeState.NotUsed]);
             Assert.AreEqual(1, states[CodeState.Used]);
-            Assert.AreEqual(10, codes.Length);
+            Assert.AreEqual(numberOfCodesToGenerate, codes.Count);
         }
 
         [Test]
         public void UseNonExistingCode()
         {
             var codeGenerator = new CodeGenerator();
-            var codes = new CodesCollection(codeGenerator);
+            var codes = new CodesCollection();
 
-            var wasSuccess = codes.GenerateNewCodes(10, 8);
+            var codeLength = 8;
+            var numberOfCodesToGenerate = 10;
+
+            var wasSuccess = codeGenerator.TryAddNewUniqueCodes(codes, codeLength, numberOfCodesToGenerate, out _);
             Assert.IsTrue(wasSuccess);
-            Assert.AreEqual(10, codes.Length);
+            Assert.AreEqual(10, codes.Count);
 
             Code code;
             while (true)
             {
-                code = codeGenerator.GenerateCode(8);
+                code = codeGenerator.GenerateCode(codeLength);
                 if (!codes.Contains(code)) break;
             }
 
@@ -71,24 +82,26 @@ namespace TestCodeService
 
             var states = codes.GroupBy(c => c.State).ToDictionary(g => g.Key, g => g.Count());
             Assert.AreEqual(1, states.Count);
-            Assert.AreEqual(10, states[CodeState.NotUsed]);
-            Assert.AreEqual(10, codes.Length);
+            Assert.AreEqual(numberOfCodesToGenerate, states[CodeState.NotUsed]);
+            Assert.AreEqual(numberOfCodesToGenerate, codes.Count);
         }
 
         [Test]
         public void UseCodeWhenCodeCollectionIsEmpty()
         {
             var codeGenerator = new CodeGenerator();
-            var codes = new CodesCollection(codeGenerator);
+            var codes = new CodesCollection();
 
-            var code = codeGenerator.GenerateCode(8);
+            var codeLength = 8;
+
+            var code = codeGenerator.GenerateCode(codeLength);
 
             var codeState = codes.CheckCode(code);
             Assert.AreEqual(CodeState.DoesNotExist, codeState);
 
             var states = codes.GroupBy(c => c.State).ToDictionary(g => g.Key, g => g.Count());
             Assert.AreEqual(0, states.Count);
-            Assert.AreEqual(0, codes.Length);
+            Assert.AreEqual(0, codes.Count);
         }
     }
 }

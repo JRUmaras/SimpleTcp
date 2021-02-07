@@ -5,7 +5,7 @@ namespace CodeService.Interfaces
 {
     public interface ICodeGenerator
     {
-        bool GenerateAndAddUniqueCodes(HashSet<Code> existingCodes, int codeLength, int numberOfCodesToGenerate);
+        bool TryAddNewUniqueCodes(ICodesCollection existingCodesEnumerable, int codeLength, int numberOfCodesToGenerate, out List<Code> newCodesAdded);
 
         Code GenerateCode(int length);
     }
